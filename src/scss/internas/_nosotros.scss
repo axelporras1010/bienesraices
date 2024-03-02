@@ -1,0 +1,14 @@
+.principal{
+    h3{
+        font-weight: 900;
+    }
+
+    @include tablet{
+        @include grid(2, 5rem);
+    }
+}
+
+.imagen-nosotros{
+    display: flex;
+    align-items: center;
+}

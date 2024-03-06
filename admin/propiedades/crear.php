@@ -1,4 +1,12 @@
 <?php 
+    //Verifica si esta autenticado
+    require '../../includes/funciones.php';
+    $auth = estaAutenticado();
+
+    if(!$auth){
+        header('location: /bienesraices_inicio/index.php');
+    }
+
     //Base de datos
     require '../../includes/config/database.php';
     $db = conectarDB();
@@ -61,7 +69,6 @@
         }
     }
 
-    require '../../includes/funciones.php';
     incluirTemplate('header');
 ?>
     

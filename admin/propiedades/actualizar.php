@@ -1,11 +1,7 @@
 <?php
     //Verifica si esta autenticado
-    require '../../includes/funciones.php';
-    $auth = estaAutenticado();
-
-    if(!$auth){
-        header('location: /bienesraices_inicio/index.php');
-    }
+    require '../../includes/app.php';
+    estaAutenticado();
 
     //Validar por URL un id Valido
     $id = $_GET['id'];
@@ -15,7 +11,6 @@
     }
 
     //Base de datos
-    require '../../includes/config/database.php';
     $db = conectarDB();
 
     //Consultas

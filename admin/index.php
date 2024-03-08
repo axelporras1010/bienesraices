@@ -1,14 +1,9 @@
 <?php 
     //Verifica si esta autenticado
-    require '../includes/funciones.php';
-    $auth = estaAutenticado();
-
-    if(!$auth){
-        header('location: /bienesraices_inicio/index.php');
-    }
+    require '../includes/app.php';
+    estaAutenticado();
 
     //Importar la conexion a la DB
-    require '../includes/config/database.php';
     $db = conectarDB();
 
     //Escribir el query

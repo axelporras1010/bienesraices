@@ -1,0 +1,15 @@
+{
+    "name": "axelo/bienesraices_inicio",
+    "autoload": {
+        "psr-4": {
+            "App\\": "./classes"
+        }
+    },
+    "authors": [
+        {
+            "name": "Axel Porras",
+            "email": "axelporrasg@gmail.com"
+        }
+    ],
+    "require": {}
+}

@@ -5,7 +5,7 @@
         header('location: /bienesraices_inicio/anuncios.php');
     }
 
-    require 'includes/config/database.php';
+    require 'includes/app.php';
     $db = conectarDB();
     $query = "SELECT * FROM propiedades WHERE id=".$id;
     $resultado = mysqli_query($db, $query);
@@ -14,7 +14,6 @@
     }
     $propiedad = mysqli_fetch_assoc($resultado);
 
-    require 'includes/funciones.php';
     incluirTemplate('header');
 ?>
 

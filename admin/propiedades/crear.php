@@ -1,14 +1,13 @@
 <?php 
     //Verifica si esta autenticado
-    require '../../includes/funciones.php';
-    $auth = estaAutenticado();
+    require '../../includes/app.php';
+    use App\Propiedad;
 
-    if(!$auth){
-        header('location: /bienesraices_inicio/index.php');
-    }
+    $propiedad = new Propiedad;
+
+    estaAutenticado();
 
     //Base de datos
-    require '../../includes/config/database.php';
     $db = conectarDB();
 
     $query = "SELECT * FROM vendedores";

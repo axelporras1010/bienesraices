@@ -2,65 +2,51 @@
     //Verifica si esta autenticado
     require '../../includes/app.php';
     use App\Propiedad;
-
-    $propiedad = new Propiedad;
+    use Intervention\Image\ImageManager;
+    use Intervention\Image\Drivers\Gd\Driver;
 
     estaAutenticado();
 
     //Base de datos
     $db = conectarDB();
 
+    $propiedad = new Propiedad;
+
     $query = "SELECT * FROM vendedores";
     $resultado = mysqli_query($db, $query);
 
+    $errores = Propiedad::getErrores();
+
     $errors = [];
 
-    $titulo = '';
-    $precio = '';
-    $descripcion = '';
-    $habitaciones = '';
-    $wc = '';
-    $estacionamiento = '';
-    $vendedorId = '';
-
     if($_SERVER['REQUEST_METHOD'] === 'POST'){
-        $titulo = mysqli_real_escape_string( $db,  $_POST['titulo']);
-        $precio = mysqli_real_escape_string( $db,  $_POST['precio']);
-        $descripcion = mysqli_real_escape_string( $db,  $_POST['descripcion']);
-        $habitaciones = mysqli_real_escape_string( $db,  $_POST['habitaciones']);
-        $wc = mysqli_real_escape_string( $db,  $_POST['wc']);
-        $estacionamiento = mysqli_real_escape_string( $db,  $_POST['estacionamiento']);
-        $vendedorId = mysqli_real_escape_string( $db,  $_POST['vendedor']);
-        $creado = date('y/m/d');
-        $imagen = $_FILES['imagen'];
+        /** crea una nueva instancia */
+        $propiedad = new Propiedad($_POST);
+        /**Uploading files**/
+        //Create unique number for the image
+        $nombreImagen = md5(uniqid(rand(), true)) . $_FILES['imagen']['name'];
+        //Setea el nombre
+        //Upload the image
+        //Realiza un resize con intervetion
+        if($_FILES['imagen']['tmp_name']){
+            $manager = new ImageManager(new Driver());
+            $image = $manager->read($_FILES['imagen']['tmp_name'])->scale(width: 300);;
+            $propiedad->setImagen($nombreImagen);
+        }
 
-        if(!$titulo) $errores[] = 'El titulo es obligatorio';
-        if(!$precio) $errores[] = 'El precio es obligatorio';
-        if(strlen($descripcion) < 50 ) $errores[] = 'La descripcion es obligatoria y debe ser mayor a 50 caracteres';
-        if(!$habitaciones) $errores[] = 'El numero de habitaciones obligatorio';
-        if(!$wc) $errores[] = 'El numero de baños es obligatorio';
-        if(!$estacionamiento) $errores[] = 'El numero de estacionamientos es obligatorio';
-        if(!$vendedorId) $errores[] = 'El vendedor es obligatorio';
-        if(!$imagen['name'] || $imagen['error']) $errores[] = 'La imagen es obligatoria';
-
-        //Validate image by size (1mb)
-        $medida = 1000 * 1000;
-        if($imagen['size'] > $medida ) $errores[] = 'La imagen es muy grande';
+        
+        $errores = $propiedad->validar();
+        
 
         if(empty($errores)){
-            /**Uploading files**/
-            //Create folder
-            $carpetaImagenes = '../../imagenes/';
-            if(!is_dir($carpetaImagenes)) mkdir($carpetaImagenes);
-            //Create unique number for the image
-            $nombreImagen = md5(uniqid(rand(), true)) . $imagen['name'];
-            //Upload the image
-            move_uploaded_file($imagen['tmp_name'], $carpetaImagenes . $nombreImagen);
+            //crea la carpeta para subir imagenes
+            if(!is_dir(CARPETA_IMAGENES)) mkdir(CARPETA_IMAGENES);
 
-            //Inserting in the database
-            $query = "INSERT INTO propiedades (titulo, precio, imagen, descripcion, habitaciones, wc, estacionamiento, creado, vendedores_id) VALUES ('$titulo', '$precio', '$nombreImagen', '$descripcion', '$habitaciones', '$wc', '$estacionamiento', '$creado', '$vendedorId')";
+            //Guarda la imagen en el servidor
+            $image->save(CARPETA_IMAGENES . $nombreImagen);
 
-            $resultado = mysqli_query($db, $query);
+            //Guardar en la DB
+            $resultado = $propiedad->guardar();
 
             if($resultado){
                 header('Location: /bienesraices_inicio/admin/index.php?resultado=1');
@@ -83,44 +69,11 @@
         <a href="/bienesraices_inicio/admin/index.php"class="boton boton-verde">Volver</a>
 
         <form class="formulario" method="POST" action="/bienesraices_inicio/admin/propiedades/crear.php" enctype="multipart/form-data">
-            <fieldset>
-                <legend>Informacion General</legend>
-
-                <label for="titulo">Titulo</label>
-                <input type="text" id="titulo" name="titulo" placeholder="Titulo Propiedad" value="<?php echo $titulo; ?>">
-
-                <label for="precio">Precio</label>
-                <input type="number" id="precio" name="precio" placeholder="Precio Propiedad" value="<?php echo $precio; ?>">
-
-                <label for="imagen">Imagen</label>
-                <input type="file" id="imagen" accept="image/jpeg, image/png" name="imagen">
-
-                <label for="descripcion">Descripcion</label>
-                <textarea id="descripcion" name="descripcion"><?php echo $descripcion; ?></textarea>
-            </fieldset>
-            <fieldset>
-                <legend>Informacion de la Propiedad</legend>
-
-                <label for="habitaciones">Habitaciones</label>
-                <input type="number" id="habitaciones" name="habitaciones" min="1" max="9" value="<?php echo $habitaciones; ?>">
-
-                <label for="wc">Baños</label>
-                <input type="number" id="wc" name="wc" min="1" max="9" value="<?php echo $wc; ?>">
-
-                <label for="estacionamiento">Estacionamiento</label>
-                <input type="number" id="estacionamiento" name="estacionamiento" min="1" max="9" value="<?php echo $estacionamiento; ?>">
-            </fieldset>
-            <fieldset>
-                <legend>Vendedor</legend>
-
-                <label for="vendedor">Vendedor</label>
-                <select id="vendedor" name="vendedor">
-                    <option value="" disabled selected>Selecciona</option>
-                    <?php while ($vendedor = mysqli_fetch_assoc($resultado)) : ?>
-                        <option <?php echo ($vendedorId === $vendedor['id']) ? 'selected' : '' ; ?>  value="<?php echo $vendedor['id']; ?>"><?php echo  $vendedor['nombre'] . " " . $vendedor['apellido']; ?></option>
-                    <?php endwhile; ?>
-                </select>
-            </fieldset>
+            
+            <?php
+                include '../../includes/templates/formulario_propiedades.php';
+                // incluirTemplate('formulario_propiedades');
+            ?>
 
             <input type="submit" value="Crear Propiedad" class="boton boton-verde">
         </form>

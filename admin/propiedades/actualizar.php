@@ -100,46 +100,10 @@
         <a href="/bienesraices_inicio/admin/index.php"class="boton boton-verde">Volver</a>
 
         <form class="formulario" method="POST" enctype="multipart/form-data">
-            <fieldset>
-                <legend>Informacion General</legend>
-
-                <label for="titulo">Titulo</label>
-                <input type="text" id="titulo" name="titulo" placeholder="Titulo Propiedad" value="<?php echo $titulo; ?>">
-
-                <label for="precio">Precio</label>
-                <input type="number" id="precio" name="precio" placeholder="Precio Propiedad" value="<?php echo $precio; ?>">
-
-                <label for="imagen">Imagen</label>
-                <input type="file" id="imagen" accept="image/jpeg, image/png" name="imagen">
-                <img src="/bienesraices_inicio/imagenes/<?php echo $imagenId ?>" class="imagen-small">
-
-                <label for="descripcion">Descripcion</label>
-                <textarea id="descripcion" name="descripcion"><?php echo $descripcion; ?></textarea>
-            </fieldset>
-            <fieldset>
-                <legend>Informacion de la Propiedad</legend>
-
-                <label for="habitaciones">Habitaciones</label>
-                <input type="number" id="habitaciones" name="habitaciones" min="1" max="9" value="<?php echo $habitaciones; ?>">
-
-                <label for="wc">Baños</label>
-                <input type="number" id="wc" name="wc" min="1" max="9" value="<?php echo $wc; ?>">
-
-                <label for="estacionamiento">Estacionamiento</label>
-                <input type="number" id="estacionamiento" name="estacionamiento" min="1" max="9" value="<?php echo $estacionamiento; ?>">
-            </fieldset>
-            <fieldset>
-                <legend>Vendedor</legend>
-
-                <label for="vendedor">Vendedor</label>
-                <select id="vendedor" name="vendedor">
-                    <option value="" disabled selected>Selecciona</option>
-                    <?php while ($vendedor = mysqli_fetch_assoc($resultado)) : ?>
-                        <option <?php echo ($vendedorId === $vendedor['id']) ? 'selected' : '' ; ?>  value="<?php echo $vendedor['id']; ?>"><?php echo  $vendedor['nombre'] . " " . $vendedor['apellido']; ?></option>
-                    <?php endwhile; ?>
-                </select>
-            </fieldset>
-
+            <?php
+                include '../../includes/templates/formulario_propiedades.php';
+                // incluirTemplate('formulario_propiedades');
+            ?>
             <input type="submit" value="Actualizar Propiedad" class="boton boton-verde">
         </form>
 

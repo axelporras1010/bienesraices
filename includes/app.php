@@ -6,3 +6,4 @@ require __DIR__ . '/../vendor/autoload.php';
 
 use App\Propiedad;
 
+Propiedad::setDB(conectarDB());

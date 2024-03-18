@@ -11,5 +11,7 @@
             "email": "axelporrasg@gmail.com"
         }
     ],
-    "require": {}
+    "require": {
+        "intervention/image": "^3.0"
+    }
 }

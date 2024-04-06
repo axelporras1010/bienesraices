@@ -2,35 +2,38 @@
     //Verifica si esta autenticado
     require '../../includes/app.php';
     use App\Propiedad;
+    use App\Vendedor;
     use Intervention\Image\ImageManager;
     use Intervention\Image\Drivers\Gd\Driver;
 
     estaAutenticado();
 
-    //Base de datos
-    $db = conectarDB();
-
     $propiedad = new Propiedad;
 
-    $query = "SELECT * FROM vendedores";
-    $resultado = mysqli_query($db, $query);
+    // Consulta para obtener la info de los vendedores  
+    $vendedores = Vendedor::all();
 
+    // debuguear($vendedores);
+    //Posibles errores
     $errores = Propiedad::getErrores();
 
     $errors = [];
 
+
     if($_SERVER['REQUEST_METHOD'] === 'POST'){
+
         /** crea una nueva instancia */
-        $propiedad = new Propiedad($_POST);
+        $propiedad = new Propiedad($_POST['propiedad']);
+        // debuguear($_POST);
         /**Uploading files**/
         //Create unique number for the image
-        $nombreImagen = md5(uniqid(rand(), true)) . $_FILES['imagen']['name'];
+        $nombreImagen = md5(uniqid(rand(), true)) . $_FILES['propiedad']['name']['imagen'];
         //Setea el nombre
         //Upload the image
         //Realiza un resize con intervetion
-        if($_FILES['imagen']['tmp_name']){
+        if($_FILES['propiedad']['tmp_name']['imagen']){
             $manager = new ImageManager(new Driver());
-            $image = $manager->read($_FILES['imagen']['tmp_name'])->scale(width: 300);;
+            $image = $manager->read($_FILES['propiedad']['tmp_name']['imagen'])->scale(width: 300);;
             $propiedad->setImagen($nombreImagen);
         }
 
@@ -46,11 +49,7 @@
             $image->save(CARPETA_IMAGENES . $nombreImagen);
 
             //Guardar en la DB
-            $resultado = $propiedad->guardar();
-
-            if($resultado){
-                header('Location: /bienesraices_inicio/admin/index.php?resultado=1');
-            }
+            $propiedad->guardar();
         }
     }
 

@@ -1,5 +1,11 @@
 <?php
     //Verifica si esta autenticado
+
+use App\Propiedad;
+use App\Vendedor;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
+
     require '../../includes/app.php';
     estaAutenticado();
 
@@ -10,78 +16,34 @@
         header('Location: /bienesraices_inicio/admin/index.php');
     }
 
-    //Base de datos
-    $db = conectarDB();
+    $propiedad = Propiedad::find($id);
 
-    //Consultas
-    $query = "SELECT * FROM propiedades WHERE id=".$id;
-    $resultado = mysqli_query($db, $query);
-    $propiedad = mysqli_fetch_assoc($resultado);
+    $vendedores  = Vendedor::all();
 
-    $query = "SELECT * FROM vendedores";
-    $resultado = mysqli_query($db, $query);
-
-    $errors = [];
-
-    $titulo = $propiedad['titulo'];
-    $precio = $propiedad['precio'];
-    $descripcion = $propiedad['descripcion'];
-    $habitaciones = $propiedad['habitaciones'];
-    $wc = $propiedad['WC'];
-    $estacionamiento = $propiedad['estacionamiento'];
-    $vendedorId = $propiedad['vendedores_id'];
-    $imagenId = $propiedad['imagen'];
+    $errores = Propiedad::getErrores();
 
     if($_SERVER['REQUEST_METHOD'] === 'POST'){
-        $titulo = mysqli_real_escape_string( $db,  $_POST['titulo']);
-        $precio = mysqli_real_escape_string( $db,  $_POST['precio']);
-        $descripcion = mysqli_real_escape_string( $db,  $_POST['descripcion']);
-        $habitaciones = mysqli_real_escape_string( $db,  $_POST['habitaciones']);
-        $wc = mysqli_real_escape_string( $db,  $_POST['wc']);
-        $estacionamiento = mysqli_real_escape_string( $db,  $_POST['estacionamiento']);
-        $vendedorId = mysqli_real_escape_string( $db,  $_POST['vendedor']);
-        $creado = date('y/m/d');
-        $imagen = $_FILES['imagen'];
 
-        if(!$titulo) $errores[] = 'El titulo es obligatorio';
-        if(!$precio) $errores[] = 'El precio es obligatorio';
-        if(strlen($descripcion) < 50 ) $errores[] = 'La descripcion es obligatoria y debe ser mayor a 50 caracteres';
-        if(!$habitaciones) $errores[] = 'El numero de habitaciones obligatorio';
-        if(!$wc) $errores[] = 'El numero de baños es obligatorio';
-        if(!$estacionamiento) $errores[] = 'El numero de estacionamientos es obligatorio';
-        if(!$vendedorId) $errores[] = 'El vendedor es obligatorio';
+        $args = $_POST['propiedad'];
 
-        //Validate image by size (1mb)
-        $medida = 1000 * 1000;
-        if($imagen['size'] > $medida ) $errores[] = 'La imagen es muy grande';
+        $propiedad->sincronizar($args);
+        
+        //Validacion
+        $errores = $propiedad->validar();
+
+        //Subida de archivos
+        $nombreImagen = md5(uniqid(rand(), true)) . $_FILES['propiedad']['name']['imagen'];
+        if($_FILES['propiedad']['tmp_name']['imagen']){
+            $manager = new ImageManager(new Driver());
+            $image = $manager->read($_FILES['propiedad']['tmp_name']['imagen'])->scale(width: 300);;
+            $propiedad->setImagen($nombreImagen);
+        }
 
         if(empty($errores)){
-            /**Uploading files**/
-            //Create folder
-            $carpetaImagenes = '../../imagenes/';
-            if(!is_dir($carpetaImagenes)) mkdir($carpetaImagenes);
-
-            $nombreImagen = '';
-
-            if($imagen['name']){
-                //Delete old image
-                unlink($carpetaImagenes . $propiedad['imagen']);
-                //Create unique number for the image
-                $nombreImagen = md5(uniqid(rand(), true)) . $imagen['name'];
-                //Upload the image
-                move_uploaded_file($imagen['tmp_name'], $carpetaImagenes . $nombreImagen);
-            }else{
-                $nombreImagen = $propiedad['imagen'];
+            if($_FILES['propiedad']['tmp_name']['imagen']){
+                $image->save(CARPETA_IMAGENES . $nombreImagen);
             }
-
-            //Inserting in the database
-            $query = "UPDATE propiedades SET titulo = '$titulo', precio='$precio', imagen='$nombreImagen', descripcion = '$descripcion', habitaciones=$habitaciones, wc = $wc, estacionamiento = $estacionamiento, vendedores_id=$vendedorId WHERE id = $id";
-
-            $resultado = mysqli_query($db, $query);
-
-            if($resultado){
-                header('Location: /bienesraices_inicio/admin/index.php?resultado=2');
-            }
+            $propiedad->guardar();
         }
     }
 
